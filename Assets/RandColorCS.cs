@@ -16,6 +16,10 @@ public class RandColorCS : MonoBehaviour
     GameObject[] gameObjects;
     Cube[] data;
     public GameObject modelPref;
+	public float timegpu =0; // cod adicional para contar tempo
+	public float timecpu =0; // cod adicional para contar tempo
+	public bool forgpu = false;
+	public bool forcpu = false;
 
     // Start is called before the first frame update
     void Start()
@@ -43,6 +47,8 @@ public class RandColorCS : MonoBehaviour
         {
             if (GUI.Button(new Rect(110, 0, 100, 50), "Random CPU"))
             {
+				if(forcpu ==false)timecpu += Time.deltaTime;
+				
                 for (int k = 0; k < iteractions; k++)
                 {
                     for (int i = 0; i < gameObjects.Length; i++)
@@ -50,17 +56,23 @@ public class RandColorCS : MonoBehaviour
                         gameObjects[i].GetComponent<MeshRenderer>().material.SetColor("_Color", Random.ColorHSV());
                     }
                 }
+				forcpu = true;
+				Debug.Log("tempo de execução de cpu: " +timecpu);
             }
         }
 
         if (data != null)
         {
+			
             if (GUI.Button(new Rect(220, 0, 100, 50), "Random GPU"))
             {
+				
+				
+				if(forgpu ==false)timegpu += Time.deltaTime;
+				
                 int totalSize = 4 * sizeof(float) + 3 * sizeof(float);
                 ComputeBuffer computeBuffer = new ComputeBuffer(data.Length, totalSize);
                 computeBuffer.SetData(data);
-
                 computeShader.SetBuffer(0, "cubes", computeBuffer);
                 computeShader.SetInt("iteraction", iteractions);
 
@@ -72,12 +84,16 @@ public class RandColorCS : MonoBehaviour
                 {
                     gameObjects[i].GetComponent<MeshRenderer>().material.SetColor("_Color", data[i].color);
                 }
-
-                computeBuffer.Dispose();
+	
+				forgpu = true;
+				Debug.Log("tempo de execução de gpu: " +timegpu);
+				
+                computeBuffer.Dispose();// liberando alocação da memória
+				
             }
         }
     }
-
+// criando os objetos
     private void createCube()
     {
         data = new Cube[count * count];
